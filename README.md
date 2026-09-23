@@ -1,72 +1,46 @@
-# gc-nx
+# libgc-nx
 
-GameCube games running natively on Nintendo Switch — statically recompiled from
-your own discs, not emulated. Each game's PowerPC code is translated to C++
-ahead of time and compiled for the Switch, with the console's system software
-answered natively rather than simulated.
+The GameCube's own hardware, as a library, for statically recompiled GameCube
+games running natively on Nintendo Switch.
 
-Game code and data are never in this repository. You build from your own disc.
+It holds only what a GameCube has and a Wii does not. Everything both machines
+share - the CPU, GX, the DSP, the OS, the SDK's libraries, the translator - is
+in [libdol-nx](https://github.com/nx-mod/libdol-nx), which this builds on.
 
-## Why this is mostly done already
+## Why it is small
 
-The GameCube and the Wii are the same machine with different peripherals. The
-CPU is the same core, the graphics hardware is the same GX, the sound hardware
-is the same DSP, and the SDK is the same code two years apart: of the libraries
-Nintendo shipped, sixteen appear in both SDKs under the same names and do the
-same job.
-
-So there is no second translator and no second runtime. A GameCube game runs on
-the same engine a Wii game does, with a different console profile underneath.
+The two consoles are the same machine with different peripherals. Of the
+libraries Nintendo shipped in the two SDKs, sixteen appear in both under the
+same names and do the same job: `ai ax axfx base card dsp dvd exi gd gf gx mtx
+os pad si vi`. Those are libdol-nx's.
 
 | | GameCube | Wii |
 |---|---|---|
-| CPU | Gekko, 486 MHz | Broadway, 729 MHz — same instruction set |
-| Graphics | Flipper GX | Hollywood GX — same pipeline |
-| Sound | DSP + ARAM | DSP, no ARAM |
+| CPU | Gekko, 486 MHz | Broadway, 729 MHz - same instruction set |
+| Graphics | Flipper GX | Hollywood GX - same pipeline |
+| Sound | DSP, with ARAM behind it | DSP, no ARAM |
 | System software | none: the game owns the machine | IOS, reached over IPC |
 | Storage | memory card | NAND |
-| Media | unencrypted disc | encrypted partitions |
+| Media | an unencrypted disc | encrypted partitions |
 
-## What the GameCube needs of its own
+## Modules
 
-Four modules and a boot path. Everything else is shared.
-
-| Part | Is | State |
+| Module | Is | State |
 |---|---|---|
-| `aram` | the 16 MB the CPU cannot address, reached by DMA | to write |
-| `card` | memory cards, as files | to write |
-| `dtk` | disc streaming audio, which the Wii dropped | to write |
-| `si` / `pad` | the controller ports | shared, already native |
-| boot | the apploader path and the console's low memory | to write |
-| disc | an unencrypted image and its filesystem | shared reader, GameCube layout |
+| `aram` | the 16 MB the CPU cannot address, reached by DMA, and the allocator and request queue the SDK puts on top | to write |
+| `card` | memory cards as files, with the console's own checksums kept so a card written here is one a GameCube would accept | to write |
+| `dtk` | audio streamed off the disc as ADPCM, which the Wii dropped | to write |
+| `boot` | the apploader path, and the low-memory block the SDK reads | to write |
 
-## Games
+A GameCube disc is read by libdol-nx: the same reader serves both consoles,
+since a Wii image is a GameCube one plus a partition table and encryption.
 
-One folder per game in [gcgames-nx](gcgames-nx). Candidates first, by how much
-is already known about them:
+## Working on it
 
-| Game | Disc | Why it is a good first target |
-|---|---|---|
-| Mario Kart: Double Dash!! | `GM4E01` | the sibling of the engine most of our natives were written against, and a CC0 decompilation exists |
-| Super Mario Sunshine | `GMSE01` | CC0 decompilation, JSystem throughout, and its THP video path is one we already replace |
-| The Wind Waker | `GZLE01` | CC0 decompilation, and a separate project has already proved the whole ISA translates |
-| Twilight Princess | `GZ2E01` | the most complete decompilation of any GameCube game |
-
-## Layout
-
-```
-gc-nx/
-├── gcgames-nx/   one folder per game
-└── docs/         what the GameCube needs, and where its behaviour is documented
-```
-
-| Library | Role |
-|---|---|
-| [libdol-nx](https://github.com/nx-mod/libdol-nx) | the machine both consoles are: CPU, GX, DSP, the SDK, the translator |
-| `libgc-nx` | what only a GameCube has: ARAM, memory cards, DTK, its boot path |
-| [aurora-nx](https://github.com/nx-mod/aurora-nx) | GX on WebGPU |
-| [dawn-nx](https://github.com/nx-mod/dawn-nx) | WebGPU on Switch |
-| [nxvk](https://github.com/nx-mod/nxvk) | the Vulkan driver underneath |
+- [docs/porting.md](docs/porting.md) - what each module has to do, in the order
+  it has to be built
+- [docs/references.md](docs/references.md) - where the hardware and the SDK are
+  documented, and what may be taken from each source
 
 ## License
 
