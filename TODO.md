@@ -12,6 +12,10 @@ Nothing here is written yet. In the order it has to be built, with
 - [ ] `dtk` - audio streamed off the disc as ADPCM, which the Wii dropped
 - [ ] AX voices that read out of ARAM rather than main memory
 - [ ] The GameCube's video modes
+- [ ] The Broadband Adapter: the games that support it play on a local network
+      with no service anywhere, which is the only multiplayer either console has
+      that needs nothing from the internet. Double Dash is the case
+      ([why](https://github.com/nx-mod/wiiconnect-nx/blob/main/docs/lan.md))
 
 Waiting on libdol-nx: a disc reader that handles an unencrypted image, and a
 console profile that leaves out everything IOS.
